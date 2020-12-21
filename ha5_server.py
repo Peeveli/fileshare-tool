@@ -65,7 +65,7 @@ def sockserv(ip, port):
                     filename = os.path.basename(filename)
                     filesize = int(filesize)
 
-                    #receive the actual file in 4096 byte chunks
+                    #receive the actual file in 'BUF_SIZE' chunks
                     progress = tqdm.tqdm(range(filesize), f"Receiving {filename}", unit="B", unit_scale=True, unit_divisor=1024)
                     with open(os.path.join(path, filename), "wb") as f:
                         for _ in progress:
@@ -73,7 +73,7 @@ def sockserv(ip, port):
                             f.write(bytes_read)
                             progress.update(len(bytes_read))
                         f.close()
-                
+                #SEND A LIST OF FILES IN CURRENT DIRECTORY 'path'
                 elif arguments[0] == "list":
                     data = ""
                     files = os.listdir(path)
@@ -81,11 +81,10 @@ def sockserv(ip, port):
                         data = data+x+" "
                     print(data)
                     conn.send(data.encode())
-
-                
+                #SEND A FILE BACK TO A CLIENT
                 elif arguments[0] == "get":
                     print("GETTING FILE")
-                
+                #STOP THE SERVICE
                 elif arguments[0] == "stop":
                     print(f"SERVER TERMINATED BY {addr}")
                     break

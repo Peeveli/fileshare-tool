@@ -41,7 +41,6 @@ def getFunc(i):
 
 
 def stopServer():
-    
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #create the socket
     try:
         s.connect((ip, port))
@@ -52,7 +51,6 @@ def stopServer():
     s.close()
 
 def getFile():
-
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #create the socket
     try:
         s.connect((ip, port))
@@ -65,13 +63,16 @@ def getFile():
 def getList():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #create the socket
     try:
+        #send the command for listing the files back to client
         s.connect((ip, port))
         s.send(command.encode())
+        #receive the list
         data = s.recv(BUF_SIZE)
     except:
         print("Cannot send data, something wrong with socket, address or port")
         print(str(s.recv(1024), "utf-8"))
     
+    #print the list
     print("Server files: "+ data.decode())
 
 def sendFile():
