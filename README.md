@@ -1,6 +1,6 @@
 # fileshare-tool
 Simple fileshare tool to share files between client and host by socket.
-Requires python 3.5 or never
+Requires python 3.5 or newer
 
 ## server.py usage
 1. Before running the first time
