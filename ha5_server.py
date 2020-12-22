@@ -63,7 +63,7 @@ def sockserv(ip, port):
                     filesize = int(filesize)
 
                     #receive the actual file in 'BUF_SIZE' chunks
-                    progress = tqdm.tqdm(range(filesize), f"Receiving {filename}", unit="B", unit_scale=True, unit_divisor=1024)
+                    progress = tqdm.tqdm(range(filesize), f"Receiving {filename}", unit="B", unit_scale=True, unit_divisor=BUF_SIZE)
                     with open(os.path.join(path, filename), "wb") as f:
                         for _ in progress:
                             bytes_read = conn.recv(BUF_SIZE)
@@ -86,7 +86,7 @@ def sockserv(ip, port):
                     filename = f"{path}/{arguments[1]}"
                     filesize = os.path.getsize(filename)
                     conn.send(f"{arguments[1]}{SEPARATOR}{filesize}".encode())
-                    progress = tqdm.tqdm(range(filesize), f"Sending {filename}", unit="B", unit_scale=True, unit_divisor=1024)
+                    progress = tqdm.tqdm(range(filesize), f"Sending {filename}", unit="B", unit_scale=True, unit_divisor=BUF_SIZE)
                     with open(filename, "rb") as f:
                         for _ in progress:
                             #read the bytes from file
