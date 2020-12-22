@@ -30,6 +30,7 @@ python3.7 client.py "destination_ip" "destination_port" "command" "file -optiona
   <li>file is mandatory only for "get" and "send" commands</li>
   <li>Every file client receives will need a unique name, otherwise it will write on top of the existing file (will add a optional filename for the future)</li>
 </ul>
+
 3. Commands:
 <ul>
   <li>list = Lists files from currently assigned folder by the running server</li>
