@@ -9,28 +9,28 @@ BUF_SIZE = 4096 #Each step buffer size
 def cmd():
     c = len(sys.argv)
     if c <= 3:
-        print("Error: Not enought parameters \n'list/send/get/stop' 'ip' 'port' 'file'")
+        print("Error: Not enought parameters \n ip port 'list/send/get/stop' file(optional)")
     else:
         try:
             global command
             global ip
             global port
             global path
-            command = sys.argv[1]
-            ip = sys.argv[2]
-            port = int(sys.argv[3])
+            command = sys.argv[3]
+            ip = sys.argv[1]
+            port = int(sys.argv[2])
             path = sys.argv[4]
             getFunc(command)
         except IndexError:
-            if command != "send":
-                getFunc(command)
+            if command == "send" or command == "get":   #file path must be assigned with these commands
+                print("ValueError. No file specified")  #at this point nothing is sent to server
             else:
-                print("ValueError. No file specified")
+                getFunc(command)                        #continues to execute
         except ValueError:
             print("ValueError. Port has to be numbers")
 
 def getFunc(i):
-    switcher={
+    switcher={      #collection for functions
         "list":getList,
         "send":sendFile,
         "get":getFile,
@@ -54,23 +54,26 @@ def getFile():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #create the socket
     try:
         s.connect((ip, port))
-        s.send(f"{command}{SEPARATOR}{path}".encode())
-        #receive the file info first
-        receive = s.recv(BUF_SIZE).decode()
-        arguments = receive.split(SEPARATOR)
+        s.send(f"{command}{SEPARATOR}{path}".encode())  #send the info of wanted file
+
+        receive = s.recv(BUF_SIZE).decode()     #receive the file info
+        arguments = receive.split(SEPARATOR)    #parse info to array
         filename = arguments[0]
         filesize = arguments[1]
         filename = os.path.basename(filename)
         filesize = int(filesize)
 
-        #receive the actual file in 'BUF_SIZE' chunks
-        progress = tqdm.tqdm(range(filesize), f"Receiving {filename}", unit="B", unit_scale=True, unit_divisor=1024)
-        with open(filename, "wb") as f:
-            for _ in progress:
-                bytes_read = s.recv(BUF_SIZE)
-                f.write(bytes_read)
-                progress.update(len(bytes_read))
-            f.close()
+        if (filename != "-"): #check for error prefix '-'
+            #receive the actual file in 'BUF_SIZE' chunks
+            progress = tqdm.tqdm(range(filesize), f"Receiving {filename}", unit="B", unit_scale=True, unit_divisor=1024)
+            with open(filename, "wb") as f:
+                for _ in progress:
+                    bytes_read = s.recv(BUF_SIZE)
+                    f.write(bytes_read)
+                    progress.update(len(bytes_read))
+                f.close()
+        else:
+            print("File does not exist. Nothing received")
     except:
         print("Cannot send data, something wrong with socket, address or port")
         print(str(s.recv(1024), "utf-8"))
@@ -88,7 +91,7 @@ def getList():
         print(str(s.recv(1024), "utf-8"))
     
     #print the list
-    print("Server files: "+ data.decode())
+    print("Server files:\n"+ data.decode())
 
 def sendFile():
     #check if file exists
@@ -101,15 +104,12 @@ def sendFile():
             progress = tqdm.tqdm(range(filesize), f"Sending {path}", unit="B", unit_scale=True, unit_divisor=1024)
             with open(path, "rb") as f:
                 for _ in progress:
-                    #read the bytes from file
-                    bytes_read = f.read(BUF_SIZE)
+                    bytes_read = f.read(BUF_SIZE)  #read the bytes from file
                     if not bytes_read:
-                        #file transmit done, shutdown informs server not to receive anymore
-                        s.shutdown(socket.SHUT_WR)
+                        s.shutdown(socket.SHUT_WR) #file transmit done, shutdown informs server not to receive anymore
                         break
                     s.sendall(bytes_read)
-                    #progress bar update
-                    progress.update(len(bytes_read))
+                    progress.update(len(bytes_read)) #progress bar update
 
         except socket.error:
             print("Cannot send data, something wrong with socket, address or port")

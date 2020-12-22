@@ -10,7 +10,7 @@ def cmd():
     #Check the amount of arguments given
     c = len(sys.argv)
     if c != 4:
-        print("Error: Not enought parameters \nha3_server.py ip port")
+        print("Error: Not enought parameters \nip port 'folder'(creates new if doesn't exist)")
     else:
         #set given arguments
         global path
@@ -41,23 +41,21 @@ def listener():
 def sockserv(ip, port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #create socket
     with sock as s:
-        try: #bind port and ip
+        try:
             s.bind((ip, port))
             while True:
-                #allow maximium connections of 5
-                s.listen(5)
+                s.listen(5)                             #allow maximium connections of 5
                 print("Listening socket... ")
 
                 (conn, addr) = s.accept()
                 print(f"{addr} is connected.")
 
-                #receive the command and file info first
-                receive = conn.recv(BUF_SIZE).decode()
+                receive = conn.recv(BUF_SIZE).decode()  #receive the command and file info first
                 arguments = receive.split(SEPARATOR)
                 
-                if arguments[0] == "send":    
-                    #receive the file info first
-                    filename = arguments[1]
+                #UPLOAD BY CLIENT
+                if arguments[0] == "send":              #client wants to upload a file
+                    filename = arguments[1]             #receive the file info first
                     filesize = arguments[2]
                     filename = os.path.basename(filename)
                     filesize = int(filesize)
@@ -76,7 +74,9 @@ def sockserv(ip, port):
                     data = ""
                     files = os.listdir(path)
                     for x in files:
-                        data = data+x+" "
+                        data = data+x+"\n"
+                    if not data:
+                        data = "Current server folder empty"
                     print(data)
                     conn.send(data.encode())
                 
@@ -84,20 +84,22 @@ def sockserv(ip, port):
                 elif arguments[0] == "get":
                     print("GETTING FILE")
                     filename = f"{path}/{arguments[1]}"
-                    filesize = os.path.getsize(filename)
-                    conn.send(f"{arguments[1]}{SEPARATOR}{filesize}".encode())
-                    progress = tqdm.tqdm(range(filesize), f"Sending {filename}", unit="B", unit_scale=True, unit_divisor=BUF_SIZE)
-                    with open(filename, "rb") as f:
-                        for _ in progress:
-                            #read the bytes from file
-                            bytes_read = f.read(BUF_SIZE)
-                            if not bytes_read:
-                                #file transmit done, shutdown informs server not to receive anymore
-                                conn.shutdown(socket.SHUT_WR)
-                                break
-                            conn.sendall(bytes_read)
-                            #progress bar update
-                            progress.update(len(bytes_read))
+                    if os.path.exists(filename):                    #check file existence before filesize
+
+                        filesize = os.path.getsize(filename)
+                        conn.send(f"{arguments[1]}{SEPARATOR}{filesize}".encode())
+                        progress = tqdm.tqdm(range(filesize), f"Sending {filename}", unit="B", unit_scale=True, unit_divisor=BUF_SIZE)
+                        with open(filename, "rb") as f:
+                            for _ in progress:
+                                bytes_read = f.read(BUF_SIZE)       #read the bytes from file
+                                if not bytes_read:
+                                    conn.shutdown(socket.SHUT_WR)   #file transmit done, shutdown informs server not to receive anymore
+                                    break
+                                conn.sendall(bytes_read)
+                                progress.update(len(bytes_read))    #progress bar update
+                    else: 
+                        conn.send(f"-{SEPARATOR}{0}".encode())
+                        print("File not found")
 
                 #STOP THE SERVICE
                 elif arguments[0] == "stop":
