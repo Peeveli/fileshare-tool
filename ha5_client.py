@@ -54,11 +54,26 @@ def getFile():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #create the socket
     try:
         s.connect((ip, port))
-        s.send(command.encode())
-    except socket.error:
-            print("Cannot send data, something wrong with socket, address or port")
-            print(str(s.recv(1024), "utf-8"))
-    s.close()
+        s.send(f"{command}{SEPARATOR}{path}".encode())
+        #receive the file info first
+        receive = s.recv(BUF_SIZE).decode()
+        arguments = receive.split(SEPARATOR)
+        filename = arguments[0]
+        filesize = arguments[1]
+        filename = os.path.basename(filename)
+        filesize = int(filesize)
+
+        #receive the actual file in 'BUF_SIZE' chunks
+        progress = tqdm.tqdm(range(filesize), f"Receiving {filename}", unit="B", unit_scale=True, unit_divisor=1024)
+        with open(filename, "wb") as f:
+            for _ in progress:
+                bytes_read = s.recv(BUF_SIZE)
+                f.write(bytes_read)
+                progress.update(len(bytes_read))
+            f.close()
+    except:
+        print("Cannot send data, something wrong with socket, address or port")
+        print(str(s.recv(1024), "utf-8"))
 
 def getList():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #create the socket
@@ -78,7 +93,6 @@ def getList():
 def sendFile():
     #check if file exists
     if os.path.exists(path):
-        global filesize
         filesize = os.path.getsize(path)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #create the socket
         try:

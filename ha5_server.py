@@ -50,15 +50,12 @@ def sockserv(ip, port):
 
                 (conn, addr) = s.accept()
                 print(f"{addr} is connected.")
-                
-                #check if command is sent correctly
-                #everything ok
-                                    
-                #receive the file info first
+
+                #receive the command and file info first
                 receive = conn.recv(BUF_SIZE).decode()
                 arguments = receive.split(SEPARATOR)
-                if arguments[0] == "send":
-                    
+                
+                if arguments[0] == "send":    
                     #receive the file info first
                     filename = arguments[1]
                     filesize = arguments[2]
@@ -73,6 +70,7 @@ def sockserv(ip, port):
                             f.write(bytes_read)
                             progress.update(len(bytes_read))
                         f.close()
+                
                 #SEND A LIST OF FILES IN CURRENT DIRECTORY 'path'
                 elif arguments[0] == "list":
                     data = ""
@@ -81,9 +79,26 @@ def sockserv(ip, port):
                         data = data+x+" "
                     print(data)
                     conn.send(data.encode())
+                
                 #SEND A FILE BACK TO A CLIENT
                 elif arguments[0] == "get":
                     print("GETTING FILE")
+                    filename = f"{path}/{arguments[1]}"
+                    filesize = os.path.getsize(filename)
+                    conn.send(f"{arguments[1]}{SEPARATOR}{filesize}".encode())
+                    progress = tqdm.tqdm(range(filesize), f"Sending {filename}", unit="B", unit_scale=True, unit_divisor=1024)
+                    with open(filename, "rb") as f:
+                        for _ in progress:
+                            #read the bytes from file
+                            bytes_read = f.read(BUF_SIZE)
+                            if not bytes_read:
+                                #file transmit done, shutdown informs server not to receive anymore
+                                conn.shutdown(socket.SHUT_WR)
+                                break
+                            conn.sendall(bytes_read)
+                            #progress bar update
+                            progress.update(len(bytes_read))
+
                 #STOP THE SERVICE
                 elif arguments[0] == "stop":
                     print(f"SERVER TERMINATED BY {addr}")
