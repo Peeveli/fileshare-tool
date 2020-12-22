@@ -2,7 +2,7 @@
 Simple fileshare tool to share files between client and host by socket.
 Requires python 3.5 or newer
 
-## server.py usage
+## server.py
 1. Before running the first time
 
 ```
@@ -17,7 +17,7 @@ python3.7 server.py "source_ip" "source_port" "folder"
   <li>Every file server receives will need a unique name, otherwise it will write on top of the existing file (will add a optional filename for the future)</li>
 </ul>
 
-## client.py usage
+## client.py
 1. Before running the first time
 
 ```
