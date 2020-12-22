@@ -5,8 +5,9 @@ Requires python 3.5 or never
 ## SERVER Usage
 1. Before running the first time
 
+```
 pip install tqdm
-
+```
 2. Usage
 python3.7 server.py "source_ip" "source_port" "folder"
 
@@ -18,8 +19,9 @@ python3.7 server.py "source_ip" "source_port" "folder"
 ## CLIENT Usage
 1. Before running the first time
 
+```
 pip install tqdm
-
+```
 2. Usage
 python3.7 client.py "destination_ip" "destination_port" "command" "file -optional"
 
